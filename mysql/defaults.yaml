@@ -101,6 +101,60 @@ Debian:
       # {% if salt['grains.get']('osmajorrelease')|int >= 9 -%}
       # !includedir /etc/mysql/mariadb.conf.d/
       # {%- endif %}
+Raspbian:
+  {%- if salt['grains.get']('osmajorrelease')|int >= 9 %}
+  {% set mysql_engine = 'mariadb' %}
+  {% set mysql_service = 'mysql' %}
+  {%- else %}
+  {% set mysql_engine = 'mysql' %}
+  {% set mysql_service = 'mysql' %}
+  {%- endif %}
+
+  server: {{ mysql_engine }}-server
+  service: {{ mysql_service }}
+  client: {{ mysql_engine }}-client
+  python: python-mysqldb
+  debconf_utils: debconf-utils
+  dev: lib{{ mysql_engine }}client-dev
+  config:
+    file: /etc/mysql/my.cnf
+    sections:
+      client:
+        port: 3306
+        socket: /var/run/mysqld/mysqld.sock
+      mysqld_safe:
+        socket: /var/run/mysqld/mysqld.sock
+        nice: 0
+      mysqld:
+        user: mysql
+        pid_file: /var/run/mysqld/mysqld.pid
+        socket: /var/run/mysqld/mysqld.sock
+        port: 3306
+        basedir: /usr
+        datadir: /var/lib/mysql
+        tmpdir: /tmp
+        lc_messages_dir:  /usr/share/mysql
+        skip_external_locking: noarg_present
+        bind_address: 127.0.0.1
+        key_buffer_size: 16M
+        max_allowed_packet: 16M
+        thread_stack: 192K
+        thread_cache_size: 8
+        query_cache_limit: 1M
+        query_cache_size: 16M
+        expire_logs_days: 10
+        max_binlog_size: 100M
+      mysqldump:
+        quick: noarg_present
+        quote_names: noarg_present
+        max_allowed_packet: 16M
+      isamchk:
+        key_buffer_size: 16M
+    append: |
+      !includedir /etc/mysql/conf.d/
+      # {% if salt['grains.get']('osmajorrelease')|int >= 9 -%}
+      # !includedir /etc/mysql/mariadb.conf.d/
+      # {%- endif %}
 CentOS:
   # https://mariadb.com/blog/rhel7-transition-mysql-mariadb-first-look
   {%- if salt['grains.get']('osmajorrelease')|int in [7] %}
